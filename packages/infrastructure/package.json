@@ -1,0 +1,28 @@
+{
+  "name": "@carbon-tracker/infrastructure",
+  "version": "1.0.0",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run --coverage",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@carbon-tracker/application": "*",
+    "@carbon-tracker/shared-types": "*",
+    "@prisma/client": "^5.14.0",
+    "redis": "^4.6.13",
+    "@google-cloud/pubsub": "^4.3.3",
+    "@google-cloud/secret-manager": "^5.2.0"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^1.6.0",
+    "prisma": "^5.14.0",
+    "vitest": "^1.6.0",
+    "testcontainers": "^10.9.0",
+    "@testcontainers/postgresql": "^10.9.0",
+    "@testcontainers/redis": "^10.9.0"
+  }
+}

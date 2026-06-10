@@ -1,0 +1,111 @@
+name: CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  REGION: us-central1
+  ARTIFACT_REGISTRY: us-central1-docker.pkg.dev
+  API_IMAGE: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/carbon-repo/api
+  WEB_IMAGE: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/carbon-repo/web
+
+jobs:
+  build-scan-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SA_EMAIL }}
+
+      - name: Configure Docker
+        run: gcloud auth configure-docker $ARTIFACT_REGISTRY --quiet
+
+      - name: Build API Image
+        run: docker build -t $API_IMAGE:${{ github.sha }} -f apps/api/Dockerfile .
+
+      - name: Build Web Image
+        run: docker build -t $WEB_IMAGE:${{ github.sha }} -f apps/web/Dockerfile .
+
+      - name: Scan API Image (Trivy)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ env.API_IMAGE }}:${{ github.sha }}'
+          format: 'sarif'
+          output: 'trivy-api.sarif'
+          severity: 'CRITICAL,HIGH'
+          exit-code: 1
+
+      - name: Push Images
+        run: |
+          docker push $API_IMAGE:${{ github.sha }}
+          docker push $WEB_IMAGE:${{ github.sha }}
+
+  deploy-staging:
+    needs: build-scan-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SA_EMAIL }}
+
+      - name: Deploy API to Staging
+        run: |
+          gcloud run deploy carbon-tracker-api-staging \
+            --image=$API_IMAGE:${{ github.sha }} \
+            --region=$REGION \
+            --quiet
+
+      - name: Run Smoke Tests
+        run: echo "Simulating smoke tests against staging..."
+
+  deploy-canary:
+    needs: deploy-staging
+    runs-on: ubuntu-latest
+    steps:
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SA_EMAIL }}
+
+      - name: Deploy Canary (10% traffic)
+        run: |
+          gcloud run deploy carbon-tracker-api \
+            --image=$API_IMAGE:${{ github.sha }} \
+            --region=$REGION \
+            --tag=canary-${{ github.sha }} \
+            --update-traffic=canary-${{ github.sha }}=10 \
+            --quiet
+
+      - name: Wait for Observation
+        run: sleep 1800 # 30 mins canary bake time
+
+  deploy-production:
+    needs: deploy-canary
+    runs-on: ubuntu-latest
+    steps:
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SA_EMAIL }}
+
+      - name: Promote to Production (100% traffic)
+        run: |
+          gcloud run deploy carbon-tracker-api \
+            --image=$API_IMAGE:${{ github.sha }} \
+            --region=$REGION \
+            --update-traffic=canary-${{ github.sha }}=100 \
+            --quiet

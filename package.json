@@ -1,0 +1,37 @@
+{
+  "name": "carbon-tracker",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "e2e"
+  ],
+  "scripts": {
+    "prepare": "husky",
+    "lint": "eslint . --ext .ts,.tsx --max-warnings 0",
+    "lint:domain": "eslint packages/domain/src --ext .ts --max-warnings 0",
+    "complexity:domain": "eslint packages/domain/src --ext .ts --rule \"complexity: [error, 8]\" --max-warnings 0",
+    "lint:application": "eslint packages/application/src --ext .ts --max-warnings 0",
+    "complexity:application": "eslint packages/application/src --ext .ts --rule \"complexity: [error, 8]\" --max-warnings 0",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "test:domain": "vitest run packages/domain --coverage",
+    "test:application": "vitest run packages/application --coverage",
+    "build:application": "npm run build -w @carbon-tracker/application",
+    "build": "npm run build --workspaces --if-present"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "eslint": "^8.57.0",
+    "eslint-import-resolver-typescript": "^3.6.1",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-react": "^7.34.1",
+    "eslint-plugin-react-hooks": "^4.6.2",
+    "husky": "^9.0.11",
+    "lint-staged": "^15.2.2",
+    "prettier": "^3.2.5",
+    "typescript": "^5.4.5"
+  }
+}

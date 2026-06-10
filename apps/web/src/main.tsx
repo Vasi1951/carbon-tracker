@@ -1,0 +1,20 @@
+import React, { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import App from './App';
+
+if (process.env.NODE_ENV === 'development') {
+  void import('@axe-core/react').then((axe) => {
+    void axe.default(React, import('react-dom'), 1000);
+  });
+}
+
+const rootElement = document.getElementById('root');
+if (!rootElement) {
+  throw new Error('Failed to find the root element');
+}
+
+createRoot(rootElement).render(
+  <StrictMode>
+    <App />
+  </StrictMode>
+);

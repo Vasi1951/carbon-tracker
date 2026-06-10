@@ -1,0 +1,8 @@
+{
+  "*.{ts,tsx}": [
+    "eslint --fix",
+    "prettier --write",
+    "node -e \"const { execSync } = require('child_process'); execSync('npm run typecheck', { stdio: 'inherit' });\""
+  ],
+  "*.{json,md,css}": ["prettier --write"]
+}
