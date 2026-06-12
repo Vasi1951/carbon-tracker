@@ -1,4 +1,4 @@
-import { Router, Response, NextFunction, RequestHandler } from 'express';
+import { Router, Request, Response, NextFunction, RequestHandler } from 'express';
 import { z } from 'zod';
 import { ActivityCategory } from '@carbon-tracker/shared-types';
 import {
@@ -15,13 +15,11 @@ import {
   GeminiInsightsAdapter,
 } from '@carbon-tracker/infrastructure';
 import { PrismaClient } from '@prisma/client';
-import { AuthenticatedRequest } from '../middlewares/auth.middleware';
-
 export function asyncHandler(
-  fn: (req: AuthenticatedRequest, res: Response, next: NextFunction) => Promise<unknown>
+  fn: (req: Request, res: Response, next: NextFunction) => Promise<unknown>
 ): RequestHandler {
   return (req, res, next) => {
-    Promise.resolve(fn(req as AuthenticatedRequest, res, next)).catch((err: unknown) => { next(err); });
+    Promise.resolve(fn(req, res, next)).catch((err: unknown) => { next(err); });
   };
 }
 
@@ -51,7 +49,7 @@ export function createRouter(
 }
 
 async function handlePostActivities(
-  req: AuthenticatedRequest,
+  req: Request,
   res: Response,
   recordUseCase: RecordActivityUseCase
 ): Promise<unknown> {
@@ -63,14 +61,14 @@ async function handlePostActivities(
     description: z.string().min(1),
   });
   const parsed = schema.parse(req.body);
-  const userId = req.user?.id || 'default-user';
+  const userId = 'default-user';
   const result = await recordUseCase.execute({ userId, ...parsed });
   if (!result.success) return res.status(400).json({ error: result.error.message });
   return res.status(201).json(result.value);
 }
 
 async function handleGetDashboard(
-  req: AuthenticatedRequest,
+  req: Request,
   res: Response,
   dashboardUseCase: GetUserDashboardUseCase
 ): Promise<unknown> {
@@ -78,7 +76,7 @@ async function handleGetDashboard(
   if (!['day', 'week', 'month', 'year'].includes(period)) {
     return res.status(400).json({ error: 'Invalid period parameter' });
   }
-  const userId = req.user?.id || 'default-user';
+  const userId = 'default-user';
   const result = await dashboardUseCase.execute({
     userId,
     period: period as 'day' | 'week' | 'month' | 'year',
@@ -88,7 +86,7 @@ async function handleGetDashboard(
 }
 
 async function handlePostGoals(
-  req: AuthenticatedRequest,
+  req: Request,
   res: Response,
   goalUseCase: SetCarbonGoalUseCase
 ): Promise<unknown> {
@@ -97,20 +95,20 @@ async function handlePostGoals(
     timeframe: z.enum(['week', 'month', 'year']),
   });
   const parsed = schema.parse(req.body);
-  const userId = req.user?.id || 'default-user';
+  const userId = 'default-user';
   const result = await goalUseCase.execute({ userId, ...parsed });
   if (!result.success) return res.status(400).json({ error: result.error.message });
   return res.status(201).json(result.value);
 }
 
 async function handleGetInsights(
-  req: AuthenticatedRequest,
+  req: Request,
   res: Response,
   activityRepo: PrismaActivityRepository,
   goalRepo: PrismaUserGoalRepository,
   geminiAdapter: GeminiInsightsAdapter
 ): Promise<unknown> {
-  const userId = req.user?.id || 'default-user';
+  const userId = 'default-user';
   const now = new Date();
   const start = new Date();
   start.setDate(now.getDate() - 30);
@@ -122,7 +120,7 @@ async function handleGetInsights(
 }
 
 async function handleGetFactors(
-  req: AuthenticatedRequest,
+  req: Request,
   res: Response,
   prisma: PrismaClient,
   cache: RedisCacheService
@@ -136,11 +134,11 @@ async function handleGetFactors(
 }
 
 async function handleDeleteAccount(
-  req: AuthenticatedRequest,
+  req: Request,
   res: Response,
   prisma: PrismaClient
 ): Promise<unknown> {
-  const userId = req.user?.id || 'default-user';
+  const userId = 'default-user';
   await prisma.activity.deleteMany({ where: { userId } });
   await prisma.userGoal.deleteMany({ where: { userId } });
   return res.json({ success: true, message: 'Account and associated data deleted successfully' });

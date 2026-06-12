@@ -23,6 +23,7 @@ const STATIC_TIPS: Insight[] = [
     difficulty: 'easy',
     category: 'ENERGY',
     rationale: 'Standby power accounts for up to 10% of home electricity use.',
+    actionableSteps: ['Unplug microwave', 'Use smart power strips', 'Turn off PC at night']
   },
 ];
 
@@ -70,7 +71,8 @@ Return ONLY a JSON object matching this schema:
   "estimatedSavingKg": 12.5,
   "difficulty": "easy" | "medium" | "hard",
   "category": "TRANSPORT" | "FOOD" | "ENERGY" | "CONSUMPTION",
-  "rationale": "reason why this helps"
+  "rationale": "reason why this helps",
+  "actionableSteps": ["Simple Action 1", "Simple Action 2", "Simple Action 3"]
 }`;
   }
 

@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
 import { RedisCacheService } from '@carbon-tracker/infrastructure';
-import { AuthenticatedRequest } from './auth.middleware';
 
 export function createRateLimiter(cacheService: RedisCacheService) {
   return (req: Request, res: Response, next: NextFunction): void => {
@@ -12,16 +11,6 @@ export function createRateLimiter(cacheService: RedisCacheService) {
       if (ipCount > 100) {
         res.status(429).json({ error: 'Too many requests per IP' });
         return;
-      }
-
-      const user = (req as AuthenticatedRequest).user;
-      if (user && user.id) {
-        const userKey = `rate:user:${user.id}`;
-        const userCount = await incrAndExpire(cacheService, userKey, 60);
-        if (userCount > 1000) {
-          res.status(429).json({ error: 'Too many requests per user' });
-          return;
-        }
       }
 
       next();

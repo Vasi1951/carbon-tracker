@@ -49,6 +49,7 @@ export interface Insight {
   difficulty: string;
   category: string;
   rationale: string;
+  actionableSteps?: string[];
 }
 
 export * from './result';

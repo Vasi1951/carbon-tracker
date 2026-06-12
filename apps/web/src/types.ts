@@ -25,4 +25,5 @@ export interface InsightTip {
   difficulty: 'easy' | 'medium' | 'hard';
   category: string;
   rationale: string;
+  actionableSteps?: string[];
 }

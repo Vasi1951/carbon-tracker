@@ -128,6 +128,7 @@ export default function AddActivityModal({
                 className="form-control"
                 value={amount}
                 onChange={(e) => { setAmount(e.target.value); }}
+                aria-invalid={!!formError}
                 required
               />
             </div>

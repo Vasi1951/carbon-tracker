@@ -1,17 +1,14 @@
 # Stage 1: Build
 FROM node:20-bullseye-slim AS builder
 WORKDIR /app
-COPY package*.json ./
-COPY apps/api/package*.json ./apps/api/
-COPY packages/domain/package*.json ./packages/domain/
-COPY packages/shared-types/package*.json ./packages/shared-types/
-COPY packages/application/package*.json ./packages/application/
-COPY packages/infrastructure/package*.json ./packages/infrastructure/
-
-RUN npm ci
-
 COPY . .
-RUN npm run build --workspaces --if-present
+RUN npm ci
+RUN npx prisma generate --schema=packages/infrastructure/prisma/schema.prisma
+RUN npm run build -w @carbon-tracker/shared-types && \
+    npm run build -w @carbon-tracker/domain && \
+    npm run build -w @carbon-tracker/application && \
+    npm run build -w @carbon-tracker/infrastructure && \
+    npm run build -w @carbon-tracker/api
 
 # Stage 2: Distroless Runtime
 FROM gcr.io/distroless/nodejs20-debian12

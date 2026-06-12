@@ -14,15 +14,14 @@ interface DashboardPageProps {
   setGoalTimeframe: React.Dispatch<React.SetStateAction<'week' | 'month' | 'year'>>;
   handleSetGoal: (e: React.FormEvent) => void;
   setIsModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  handleLogout: () => void;
   handleDeleteAccount: () => void;
   triggerRef: React.RefObject<HTMLButtonElement | null>;
 }
 
-export default function DashboardPage({
+const DashboardPage = React.memo(function DashboardPage({
   dashboard, goal, insight, insightDismissed, setInsightDismissed,
   activities, targetGoal, setTargetGoal, goalTimeframe, setGoalTimeframe,
-  handleSetGoal, setIsModalOpen, handleLogout, handleDeleteAccount, triggerRef
+  handleSetGoal, setIsModalOpen, handleDeleteAccount, triggerRef
 }: DashboardPageProps): React.JSX.Element {
   return (
     <div className="dashboard-container">
@@ -52,7 +51,6 @@ export default function DashboardPage({
         <span className="header-brand">CarbonTwin</span>
         <div className="user-menu">
           <button ref={triggerRef as any} className="btn-action" onClick={() => { setIsModalOpen(true); }} aria-haspopup="dialog">+ Add Activity</button>
-          <button className="btn-text" onClick={handleLogout}>Logout</button>
           <button className="btn-danger-outline" onClick={handleDeleteAccount} aria-label="Delete user account (GDPR erasure request)">Delete Account</button>
         </div>
       </header>
@@ -61,13 +59,25 @@ export default function DashboardPage({
           {insight && !insightDismissed && (
             <section className="card tip-card" aria-labelledby="tip-title">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div>
+                <div style={{ width: '100%' }}>
                   <span className={`tip-difficulty difficulty-${insight.difficulty}`}>{insight.difficulty}</span>
                   <h2 id="tip-title" style={{ fontSize: '18px', margin: '10px 0 6px 0', color: '#fff' }}>{insight.tip}</h2>
                   <p style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#a4a4b2' }}>{insight.rationale}</p>
+                  
+                  {insight.actionableSteps && insight.actionableSteps.length > 0 && (
+                    <div style={{ margin: '16px 0', padding: '12px', background: 'rgba(0,0,0,0.2)', borderRadius: '8px' }}>
+                      <h3 style={{ fontSize: '14px', margin: '0 0 8px 0', color: '#fff' }}>Simple Actions You Can Take:</h3>
+                      <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '14px', color: '#e1e1e6', lineHeight: '1.5' }}>
+                        {insight.actionableSteps.map((step, i) => (
+                          <li key={i}>{step}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
                   <span style={{ fontSize: '13px', color: '#9b70ff', fontWeight: 600 }}>Estimated Saving: {String(insight.estimatedSavingKg)} kgCO₂e</span>
                 </div>
-                <button className="btn-text" onClick={() => { setInsightDismissed(true); }} aria-label="Dismiss AI tip" style={{ fontSize: '18px', padding: '0 4px' }}>&times;</button>
+                <button className="btn-text" onClick={() => { setInsightDismissed(true); }} aria-label="Dismiss AI tip" style={{ fontSize: '18px', padding: '0 4px', marginLeft: '16px' }}>&times;</button>
               </div>
             </section>
           )}
@@ -195,4 +205,6 @@ export default function DashboardPage({
       </div>
     </div>
   );
-}
+});
+
+export default DashboardPage;

@@ -1,0 +1,5 @@
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'us-central1-docker.pkg.dev/carbon-vasi-951/carbon-repo/web:latest', '--build-arg', 'VITE_API_URL=https://carbon-api-663154056506.us-central1.run.app', '-f', 'apps/web/Dockerfile', '.']
+images:
+- 'us-central1-docker.pkg.dev/carbon-vasi-951/carbon-repo/web:latest'
