@@ -1,5 +1,7 @@
 import React from 'react';
 import { DashboardData, GoalData, InsightTip, ActivityRecord } from '../types';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
+import { Leaf, Zap, Trash2, TrendingUp, AlertTriangle, Target, CheckCircle2, Activity, PieChart as PieChartIcon } from 'lucide-react';
 
 interface DashboardPageProps {
   dashboard: DashboardData | null;
@@ -18,56 +20,54 @@ interface DashboardPageProps {
   triggerRef: React.RefObject<HTMLButtonElement | null>;
 }
 
+const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+
 const DashboardPage = React.memo(function DashboardPage({
   dashboard, goal, insight, insightDismissed, setInsightDismissed,
   activities, targetGoal, setTargetGoal, goalTimeframe, setGoalTimeframe,
   handleSetGoal, setIsModalOpen, handleDeleteAccount, triggerRef
 }: DashboardPageProps): React.JSX.Element {
+  
+  const percentage = dashboard ? Math.min((dashboard.totalKgCO2e / targetGoal) * 100, 100) : 0;
+  const isWarning = dashboard && dashboard.totalKgCO2e > targetGoal;
+
   return (
     <div className="dashboard-container">
-      <style>{`
-        body { margin: 0; background: #121214; font-family: 'Inter', system-ui, -apple-system, sans-serif; color: #e1e1e6; }
-        .header { display: flex; justify-content: space-between; align-items: center; padding: 20px 40px; background: #1e1e24; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
-        .header-brand { font-size: 22px; font-weight: 700; color: #fff; }
-        .user-menu { display: flex; align-items: center; gap: 16px; }
-        .btn-text { background: none; border: none; color: #a4a4b2; font-size: 14px; cursor: pointer; }
-        .btn-text:hover { color: #fff; }
-        .btn-danger-outline { background: none; border: 1px solid rgba(255, 107, 107, 0.3); color: #ff6b6b; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
-        .btn-danger-outline:hover { background: rgba(255, 107, 107, 0.1); }
-        .main-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 32px; padding: 40px; max-width: 1400px; margin: 0 auto; }
-        .card { background: #1e1e24; border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 24px; margin-bottom: 24px; }
-        .card-title { font-size: 18px; font-weight: 600; margin: 0 0 20px 0; color: #fff; }
-        .btn-action { background: #633bbc; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; }
-        .btn-action:hover { background: #7a4ad8; }
-        .progress-bar-container { background: #121214; border-radius: 8px; height: 16px; width: 100%; overflow: hidden; margin-top: 10px; }
-        .progress-bar-fill { height: 100%; border-radius: 8px; transition: width 0.3s ease; }
-        .tip-card { border-left: 4px solid #9b70ff; background: rgba(155, 112, 255, 0.05); }
-        .tip-difficulty { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; text-transform: uppercase; }
-        .difficulty-easy { background: rgba(78, 203, 113, 0.15); color: #4ecb71; }
-        .difficulty-medium { background: rgba(255, 168, 0, 0.15); color: #ffa800; }
-        .difficulty-hard { background: rgba(255, 107, 107, 0.15); color: #ff6b6b; }
-      `}</style>
       <header className="header">
-        <span className="header-brand">CarbonTwin</span>
-        <div className="user-menu">
-          <button ref={triggerRef as any} className="btn-action" onClick={() => { setIsModalOpen(true); }} aria-haspopup="dialog">+ Add Activity</button>
-          <button className="btn-danger-outline" onClick={handleDeleteAccount} aria-label="Delete user account (GDPR erasure request)">Delete Account</button>
+        <div className="header-title">
+          <Leaf className="text-primary-color" size={28} color="#6366f1" />
+          CarbonTwin
+        </div>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <button ref={triggerRef as any} className="btn-action" onClick={() => setIsModalOpen(true)} aria-haspopup="dialog">
+            <Zap size={18} /> Add Activity
+          </button>
+          <button className="btn-danger" onClick={handleDeleteAccount} aria-label="Delete user account">
+            <Trash2 size={18} />
+          </button>
         </div>
       </header>
-      <div className="main-layout">
-        <main>
+      
+      <div className="dashboard-grid">
+        <main className="dashboard-main">
           {insight && !insightDismissed && (
-            <section className="card tip-card" aria-labelledby="tip-title">
+            <section className="glass-card ai-insight" aria-labelledby="tip-title">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div style={{ width: '100%' }}>
-                  <span className={`tip-difficulty difficulty-${insight.difficulty}`}>{insight.difficulty}</span>
-                  <h2 id="tip-title" style={{ fontSize: '18px', margin: '10px 0 6px 0', color: '#fff' }}>{insight.tip}</h2>
-                  <p style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#a4a4b2' }}>{insight.rationale}</p>
+                  <span className={`badge badge-${insight.difficulty.toLowerCase()}`}>
+                    {insight.difficulty}
+                  </span>
+                  <h2 id="tip-title" style={{ fontSize: '1.25rem', margin: '0.75rem 0', color: 'var(--text-primary)' }}>
+                    {insight.tip}
+                  </h2>
+                  <p style={{ margin: '0 0 1rem 0', color: 'var(--text-secondary)' }}>{insight.rationale}</p>
                   
                   {insight.actionableSteps && insight.actionableSteps.length > 0 && (
-                    <div style={{ margin: '16px 0', padding: '12px', background: 'rgba(0,0,0,0.2)', borderRadius: '8px' }}>
-                      <h3 style={{ fontSize: '14px', margin: '0 0 8px 0', color: '#fff' }}>Simple Actions You Can Take:</h3>
-                      <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '14px', color: '#e1e1e6', lineHeight: '1.5' }}>
+                    <div style={{ margin: '1rem 0' }}>
+                      <h3 style={{ fontSize: '1rem', color: 'var(--text-primary)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <CheckCircle2 size={18} color="var(--success-color)" /> Actionable Steps:
+                      </h3>
+                      <ul className="ai-insight-steps">
                         {insight.actionableSteps.map((step, i) => (
                           <li key={i}>{step}</li>
                         ))}
@@ -75,103 +75,127 @@ const DashboardPage = React.memo(function DashboardPage({
                     </div>
                   )}
 
-                  <span style={{ fontSize: '13px', color: '#9b70ff', fontWeight: 600 }}>Estimated Saving: {String(insight.estimatedSavingKg)} kgCO₂e</span>
+                  <span style={{ fontSize: '0.875rem', color: 'var(--success-color)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <TrendingUp size={16} /> Estimated Saving: {String(insight.estimatedSavingKg)} kgCO₂e
+                  </span>
                 </div>
-                <button className="btn-text" onClick={() => { setInsightDismissed(true); }} aria-label="Dismiss AI tip" style={{ fontSize: '18px', padding: '0 4px', marginLeft: '16px' }}>&times;</button>
+                <button className="btn-outline" onClick={() => setInsightDismissed(true)} aria-label="Dismiss AI tip" style={{ border: 'none', padding: '4px 8px' }}>
+                  &times;
+                </button>
               </div>
             </section>
           )}
 
-          <section className="card">
-            <h2 className="card-title">Carbon Emission Breakdown</h2>
-            <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', minHeight: '220px' }}>
+          <section className="glass-card">
+            <h2 className="card-title" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <PieChartIcon size={20} /> Carbon Emission Breakdown
+            </h2>
+            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-around', alignItems: 'center', minHeight: '260px' }}>
               {dashboard && dashboard.breakdown.length > 0 ? (
                 <>
-                  <svg width="200" height="200" viewBox="0 0 200 200" aria-label="Donut Chart of Emissions">
-                    <circle cx="100" cy="100" r="80" fill="none" stroke="#2a2a35" strokeWidth="20" />
-                    {(() => {
-                      let accumulated = 0;
-                      const colors = ['#9b70ff', '#4ecb71', '#ffa800', '#ff6b6b'];
-                      return dashboard.breakdown.map((cat, idx) => {
-                        const strokeDasharray = `${String((cat.percentage / 100) * 502.6)} 502.6`;
-                        const strokeDashoffset = String(-accumulated);
-                        accumulated += (cat.percentage / 100) * 502.6;
-                        return (
-                          <circle
-                            key={cat.category}
-                            cx="100" cy="100" r="80" fill="none"
-                            stroke={colors[idx % colors.length]} strokeWidth="20"
-                            strokeDasharray={strokeDasharray} strokeDashoffset={strokeDashoffset}
-                            transform="rotate(-90 100 100)"
-                          />
-                        );
-                      });
-                    })()}
-                    <circle cx="100" cy="100" r="60" fill="#1e1e24" />
-                  </svg>
-                  <div>
-                    {dashboard.breakdown.map((cat, idx) => {
-                      const colors = ['#9b70ff', '#4ecb71', '#ffa800', '#ff6b6b'];
-                      return (
-                        <div key={cat.category} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                          <span style={{ display: 'inline-block', width: '12px', height: '12px', borderRadius: '2px', background: colors[idx % colors.length] }} />
-                          <span style={{ fontSize: '14px' }}>{cat.category}: <strong>{String(cat.amount.toFixed(1))} kgCO₂e</strong> ({String(cat.percentage.toFixed(0))}%)</span>
+                  <div style={{ width: '240px', height: '240px' }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={dashboard.breakdown}
+                          cx="50%" cy="50%"
+                          innerRadius={60} outerRadius={80}
+                          paddingAngle={5} dataKey="percentage"
+                          stroke="none"
+                        >
+                          {dashboard.breakdown.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip contentStyle={{ backgroundColor: 'var(--bg-color)', border: '1px solid var(--card-border)', borderRadius: '8px' }} itemStyle={{ color: 'var(--text-primary)' }} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div style={{ flex: 1, minWidth: '200px' }}>
+                    {dashboard.breakdown.map((cat, idx) => (
+                      <div key={cat.category} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 12px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', marginBottom: '8px' }}>
+                        <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: COLORS[idx % COLORS.length] }} />
+                        <div style={{ flex: 1 }}>
+                          <div style={{ color: 'var(--text-primary)', fontWeight: 600, fontSize: '0.9rem' }}>{cat.category}</div>
+                          <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>{String(cat.amount.toFixed(1))} kgCO₂e</div>
                         </div>
-                      );
-                    })}
+                        <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{String(cat.percentage.toFixed(0))}%</div>
+                      </div>
+                    ))}
                   </div>
                 </>
               ) : (
-                <p style={{ color: '#a4a4b2' }}>No activities recorded yet. Use the button to log your first emissions.</p>
+                <p style={{ color: 'var(--text-secondary)', textAlign: 'center', width: '100%' }}>No activities recorded yet. Add an activity to see your breakdown.</p>
               )}
             </div>
           </section>
 
-          <section className="card">
-            <h2 className="card-title">Recent Activity Logs</h2>
+          <section className="glass-card">
+            <h2 className="card-title" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Activity size={20} /> Recent Activity Logs
+            </h2>
             {activities.length > 0 ? (
-              <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
                 {activities.map((a) => (
-                  <li key={a.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                    <div>
-                      <strong style={{ color: '#fff' }}>{a.description}</strong>
-                      <div style={{ fontSize: '12px', color: '#a4a4b2' }}>{a.category} &bull; {String(a.amount)} {a.unit}</div>
+                  <div key={a.id} className="activity-item">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                      <div className="activity-icon">
+                        <Zap size={18} color="var(--primary-color)" />
+                      </div>
+                      <div>
+                        <div style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{a.description}</div>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{a.category} &bull; {String(a.amount)} {a.unit}</div>
+                      </div>
                     </div>
-                    <div style={{ textAlign: 'right' }}><span style={{ fontWeight: 600 }}>{a.date.split('T')[0]}</span></div>
-                  </li>
+                    <div style={{ textAlign: 'right', fontSize: '0.875rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                      {a.date.split('T')[0]}
+                    </div>
+                  </div>
                 ))}
-              </ul>
+              </div>
             ) : (
-              <p style={{ color: '#a4a4b2' }}>No recent activity logs.</p>
+              <p style={{ color: 'var(--text-secondary)' }}>No recent activity logs.</p>
             )}
           </section>
         </main>
 
-        <aside>
-          <section className="card">
-            <h2 className="card-title">Active Goals</h2>
+        <aside className="dashboard-sidebar">
+          <section className="glass-card">
+            <h2 className="card-title" style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Target size={20} /> Active Goals
+            </h2>
             {dashboard && (
               <>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', marginBottom: '6px' }}>
-                  <span>Month's Emissions:</span><strong>{String(dashboard.totalKgCO2e.toFixed(1))} kgCO₂e</strong>
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <div className="stat-label">Month's Emissions</div>
+                  <div className="stat-value" style={{ color: isWarning ? 'var(--danger-color)' : 'var(--text-primary)' }}>
+                    {String(dashboard.totalKgCO2e.toFixed(1))} <span style={{ fontSize: '1rem', fontWeight: 500, color: 'var(--text-secondary)' }}>kgCO₂e</span>
+                  </div>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
-                  <span>Goal Target:</span><strong>{String(targetGoal)} kgCO₂e</strong>
-                </div>
-                <div className="progress-bar-container">
+                
+                <div className="progress-container">
                   <div
-                    className="progress-bar-fill"
+                    className="progress-bar"
                     style={{
-                      width: `${String(Math.min((dashboard.totalKgCO2e / targetGoal) * 100, 100))}%`,
-                      background: dashboard.totalKgCO2e > targetGoal ? '#ff6b6b' : '#4ecb71',
+                      width: `${String(percentage)}%`,
+                      background: isWarning ? 'var(--danger-color)' : 'linear-gradient(90deg, var(--primary-color), #c084fc)'
                     }}
                   />
                 </div>
-                {dashboard.totalKgCO2e > targetGoal && (
-                  <p style={{ color: '#ff6b6b', fontSize: '13px', margin: '8px 0 0 0' }}>Warning: You have exceeded your budget!</p>
+                
+                <div className="progress-text">
+                  <span>0</span>
+                  <span>Target: {String(targetGoal)} kgCO₂e</span>
+                </div>
+
+                {isWarning && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--danger-color)', fontSize: '0.875rem', marginTop: '1rem', background: 'rgba(239, 68, 68, 0.1)', padding: '0.75rem', borderRadius: '8px' }}>
+                    <AlertTriangle size={16} /> You have exceeded your budget!
+                  </div>
                 )}
+                
                 {goal && (
-                  <div style={{ fontSize: '12px', color: '#a4a4b2', marginTop: '12px' }}>
+                  <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '1rem', textAlign: 'center', borderTop: '1px solid var(--card-border)', paddingTop: '1rem' }}>
                     Goal Achievement: {new Date(goal.projectedDate).toLocaleDateString()}
                   </div>
                 )}
@@ -179,26 +203,30 @@ const DashboardPage = React.memo(function DashboardPage({
             )}
           </section>
 
-          <section className="card">
-            <h2 className="card-title">Set Carbon Goal</h2>
+          <section className="glass-card">
+            <h2 className="card-title" style={{ marginBottom: '1.5rem' }}>Set Carbon Goal</h2>
             <form onSubmit={handleSetGoal}>
               <div className="form-group">
                 <label htmlFor="goal-target">Target Limit (kgCO₂e)</label>
                 <input
-                  id="goal-target" type="number" className="form-control"
+                  id="goal-target" type="number"
                   value={targetGoal} onChange={(e) => { setTargetGoal(parseInt(e.target.value, 10) || 0); }} min="1" required
                 />
               </div>
-              <div className="form-group">
+              <div className="form-group" style={{ marginBottom: '1.5rem' }}>
                 <label htmlFor="goal-timeframe">Timeframe</label>
                 <select
-                  id="goal-timeframe" className="form-control"
+                  id="goal-timeframe"
                   value={goalTimeframe} onChange={(e) => { setGoalTimeframe(e.target.value as 'week' | 'month' | 'year'); }}
                 >
-                  <option value="week">Weekly</option><option value="month">Monthly</option><option value="year">Yearly</option>
+                  <option value="week">Weekly</option>
+                  <option value="month">Monthly</option>
+                  <option value="year">Yearly</option>
                 </select>
               </div>
-              <button type="submit" className="btn-action" style={{ width: '100%' }}>Update Goal</button>
+              <button type="submit" className="btn-action" style={{ width: '100%', justifyContent: 'center' }}>
+                Update Goal
+              </button>
             </form>
           </section>
         </aside>
