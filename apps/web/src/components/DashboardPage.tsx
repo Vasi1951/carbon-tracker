@@ -20,7 +20,7 @@ interface DashboardPageProps {
   triggerRef: React.RefObject<HTMLButtonElement | null>;
 }
 
-const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+const COLORS = ['#10b981', '#34d399', '#059669', '#6ee7b7', '#fbbf24'];
 
 const DashboardPage = React.memo(function DashboardPage({
   dashboard, goal, insight, insightDismissed, setInsightDismissed,
@@ -35,7 +35,7 @@ const DashboardPage = React.memo(function DashboardPage({
     <div className="dashboard-container">
       <header className="header">
         <div className="header-title">
-          <Leaf className="text-primary-color" size={28} color="#6366f1" />
+          <Leaf className="text-primary-color" size={28} color="#10b981" />
           CarbonTwin
         </div>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
@@ -178,7 +178,7 @@ const DashboardPage = React.memo(function DashboardPage({
                     className="progress-bar"
                     style={{
                       width: `${String(percentage)}%`,
-                      background: isWarning ? 'var(--danger-color)' : 'linear-gradient(90deg, var(--primary-color), #c084fc)'
+                      background: isWarning ? 'var(--danger-color)' : 'linear-gradient(90deg, var(--primary-color), #6ee7b7)'
                     }}
                   />
                 </div>

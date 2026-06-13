@@ -1,19 +1,19 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 :root {
-  --bg-color: #0B0F19;
-  --bg-gradient: radial-gradient(circle at top right, #1E1B4B, #0B0F19);
-  --card-bg: rgba(255, 255, 255, 0.03);
-  --card-border: rgba(255, 255, 255, 0.08);
-  --primary-color: #6366f1;
-  --primary-hover: #4f46e5;
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --text-muted: #475569;
-  --success-color: #10b981;
-  --danger-color: #ef4444;
-  --warning-color: #f59e0b;
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  --bg-color: #041A0B;
+  --bg-gradient: radial-gradient(circle at top right, #09381A, #020C05);
+  --card-bg: rgba(255, 255, 255, 0.04);
+  --card-border: rgba(167, 243, 208, 0.15);
+  --primary-color: #10b981;
+  --primary-hover: #059669;
+  --text-primary: #f0fdf4;
+  --text-secondary: #a7f3d0;
+  --text-muted: #6ee7b7;
+  --success-color: #34d399;
+  --danger-color: #f87171;
+  --warning-color: #fbbf24;
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
   --radius-lg: 16px;
   --radius-md: 12px;
   --radius-sm: 8px;
@@ -85,7 +85,7 @@ p, span, div {
   gap: 0.75rem;
   font-size: 1.5rem;
   font-weight: 800;
-  background: linear-gradient(135deg, #818cf8, #c084fc);
+  background: linear-gradient(135deg, #34d399, #059669);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -282,7 +282,7 @@ select option {
 
 /* AI Insight Box */
 .ai-insight {
-  background: linear-gradient(145deg, rgba(99, 102, 241, 0.1), rgba(192, 132, 252, 0.05));
+  background: linear-gradient(145deg, rgba(16, 185, 129, 0.1), rgba(52, 211, 153, 0.05));
   border-left: 4px solid var(--primary-color);
   padding: 1.5rem;
   border-radius: var(--radius-lg);
@@ -291,7 +291,7 @@ select option {
 }
 
 .ai-insight h3 {
-  color: #c084fc;
+  color: #34d399;
   display: flex;
   align-items: center;
   gap: 0.5rem;
