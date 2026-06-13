@@ -16,6 +16,9 @@ export interface DashboardOutput {
   trend: 'up' | 'down' | 'stable';
 }
 
+/**
+ * Use case to retrieve the user's dashboard data, including footprint and trends.
+ */
 export class GetUserDashboardUseCase {
   private readonly calc = new CalculationService();
   constructor(
@@ -25,6 +28,11 @@ export class GetUserDashboardUseCase {
     private readonly cache: ICacheService
   ) {}
 
+  /**
+   * Executes the dashboard retrieval use case.
+   * @param input - The dashboard request input.
+   * @returns A result containing the dashboard output.
+   */
   public async execute(input: GetDashboardInput): Promise<Result<DashboardOutput>> {
     try {
       const cacheKey = `dashboard:${input.userId}:${input.period}`;

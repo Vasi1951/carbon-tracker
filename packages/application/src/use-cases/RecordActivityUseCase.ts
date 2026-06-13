@@ -20,6 +20,9 @@ export interface RecordActivityOutput {
   message: string;
 }
 
+/**
+ * Use case for recording a new carbon tracking activity.
+ */
 export class RecordActivityUseCase {
   private readonly calc = new CalculationService();
   constructor(
@@ -28,6 +31,11 @@ export class RecordActivityUseCase {
     private readonly eventBus: IEventBus
   ) {}
 
+  /**
+   * Executes the record activity use case.
+   * @param input - The activity data to record.
+   * @returns A result containing the recorded activity output.
+   */
   public async execute(input: RecordActivityInput): Promise<Result<RecordActivityOutput>> {
     try {
       const id = crypto.randomUUID();

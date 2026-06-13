@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 
-export default function HomeScreen({ setScreen }: { setScreen: (s: string) => void }) {
+export default function HomeScreen({ setScreen }: { setScreen: (s: string) => void }): React.JSX.Element {
   return (
     <ScrollView 
       style={styles.container}

@@ -39,7 +39,7 @@ const DashboardPage = React.memo(function DashboardPage({
           CarbonTwin
         </div>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <button ref={triggerRef as any} className="btn-action" onClick={() => setIsModalOpen(true)} aria-haspopup="dialog">
+          <button ref={triggerRef as React.RefObject<HTMLButtonElement>} className="btn-action" onClick={() => setIsModalOpen(true)} aria-haspopup="dialog">
             <Zap size={18} /> Add Activity
           </button>
           <button className="btn-danger" onClick={handleDeleteAccount} aria-label="Delete user account">
@@ -93,7 +93,7 @@ const DashboardPage = React.memo(function DashboardPage({
             <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-around', alignItems: 'center', minHeight: '260px' }}>
               {dashboard && dashboard.breakdown.length > 0 ? (
                 <>
-                  <div style={{ width: '240px', height: '240px' }}>
+                  <div style={{ width: '240px', height: '240px' }} role="img" aria-label="Pie chart showing carbon emission breakdown">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie

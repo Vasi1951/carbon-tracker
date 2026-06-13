@@ -17,6 +17,9 @@ export interface SetCarbonGoalOutput {
   projectedDate: string;
 }
 
+/**
+ * Use case to set a new carbon footprint goal.
+ */
 export class SetCarbonGoalUseCase {
   private readonly calc = new CalculationService();
   constructor(
@@ -25,34 +28,51 @@ export class SetCarbonGoalUseCase {
     private readonly goalRepo: IUserGoalRepository
   ) {}
 
+  /**
+   * Executes the goal setting use case.
+   * @param input - The goal data to be processed.
+   * @returns A result containing the saved goal output.
+   */
   public async execute(input: SetCarbonGoalInput): Promise<Result<SetCarbonGoalOutput>> {
     try {
       const average = await this.getCurrentAverage(input.userId);
       if (average > 0 && input.targetKgCO2e < 0.1 * average) {
-        return fail(
-          new Error('Goal target is too aggressive (must be at least 10% of current average)')
-        );
+        return fail(new Error('Goal target is too aggressive'));
       }
-      const goalId = crypto.randomUUID();
-      const goal: Goal = {
-        id: goalId,
-        userId: input.userId,
-        targetKgCO2e: input.targetKgCO2e,
-        timeframe: input.timeframe,
-        createdAt: new Date(),
-      };
-      await this.goalRepo.saveGoal(goal);
-      const projectedDate = this.getProjectedDate(input.timeframe);
-      return ok({
-        goalId,
-        target: input.targetKgCO2e,
-        projectedDate: projectedDate.toISOString(),
-      });
+      return await this.saveNewGoal(input);
     } catch (err) {
       return fail(err instanceof Error ? err : new Error(String(err)));
     }
   }
 
+  /**
+   * Saves the new goal to the repository.
+   * @param input - The user goal input.
+   * @returns A result containing the goal output.
+   */
+  private async saveNewGoal(input: SetCarbonGoalInput): Promise<Result<SetCarbonGoalOutput>> {
+    const goalId = crypto.randomUUID();
+    const goal: Goal = {
+      id: goalId,
+      userId: input.userId,
+      targetKgCO2e: input.targetKgCO2e,
+      timeframe: input.timeframe,
+      createdAt: new Date(),
+    };
+    await this.goalRepo.saveGoal(goal);
+    const projectedDate = this.getProjectedDate(input.timeframe);
+    return ok({
+      goalId,
+      target: input.targetKgCO2e,
+      projectedDate: projectedDate.toISOString(),
+    });
+  }
+
+  /**
+   * Retrieves the current average carbon footprint for the user.
+   * @param userId - The user identifier.
+   * @returns The average footprint value.
+   */
   private async getCurrentAverage(userId: string): Promise<number> {
     const now = new Date();
     const start = new Date();
@@ -68,6 +88,11 @@ export class SetCarbonGoalUseCase {
     return footprint.totalKgCO2e / activities.length;
   }
 
+  /**
+   * Calculates the projected date based on the timeframe.
+   * @param timeframe - The goal timeframe.
+   * @returns The calculated date.
+   */
   private getProjectedDate(timeframe: 'week' | 'month' | 'year'): Date {
     const date = new Date();
     if (timeframe === 'week') date.setDate(date.getDate() + 7);

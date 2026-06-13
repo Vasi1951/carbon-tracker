@@ -1,4 +1,5 @@
 import React, { useRef, useEffect } from 'react';
+import { ActivityCategory } from '@carbon-tracker/shared-types';
 
 interface AddActivityModalProps {
   isModalOpen: boolean;
@@ -111,7 +112,7 @@ export default function AddActivityModal({
             <select
               id="act-category"
               value={category}
-              onChange={(e) => { setCategory(e.target.value as any); }}
+              onChange={(e) => { setCategory(e.target.value as ActivityCategory); }}
             >
               <option value="TRANSPORT">Transportation</option>
               <option value="FOOD">Food / Dining</option>

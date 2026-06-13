@@ -1,8 +1,8 @@
 import React, { useState, Suspense } from 'react';
 import { SafeAreaView, Text, View } from 'react-native';
 
-const HomeScreen = React.lazy(() => import('./screens/HomeScreen.js'));
-const AddActivityScreen = React.lazy(() => import('./screens/AddActivityScreen.js'));
+const HomeScreen = React.lazy(() => import('./screens/HomeScreen.js') as unknown as Promise<{ default: React.ComponentType<any> }>);
+const AddActivityScreen = React.lazy(() => import('./screens/AddActivityScreen.js') as unknown as Promise<{ default: React.ComponentType<any> }>);
 
 export default function App(): React.JSX.Element {
   const [currentScreen, setCurrentScreen] = useState('Home');

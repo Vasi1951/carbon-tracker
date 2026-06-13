@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert } from 'react-native';
 
-export default function AddActivityScreen({ setScreen }: { setScreen: (s: string) => void }) {
+export default function AddActivityScreen({ setScreen }: { setScreen: (s: string) => void }): React.JSX.Element {
   const [amount, setAmount] = useState('');
 
   // Mocking Location Services that respects battery life

@@ -14,7 +14,17 @@ import { createRateLimiter } from './middlewares/rateLimiter.middleware';
 
 const app = express();
 
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", 'data:'],
+      connectSrc: ["'self'"],
+    },
+  },
+}));
 const allowedOrigins = process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : ['http://localhost:5173', 'http://localhost:3000', 'https://carbon-web-663154056506.us-central1.run.app'];
 app.use(cors({ origin: allowedOrigins }));
 app.use(
@@ -35,7 +45,16 @@ const cache = new RedisCacheService(process.env.REDIS_URL || 'redis://localhost:
 const eventBus = new CloudPubSubEventBus();
 const geminiAdapter = new GeminiInsightsAdapter(process.env.GEMINI_API_KEY || 'mock-key');
 
-app.use(createRateLimiter(cache));
+import rateLimit from 'express-rate-limit';
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: 'Too many requests from this IP, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use(limiter);
 app.use(
   '/api/v1',
   createRouter(prisma, cache, eventBus, geminiAdapter)

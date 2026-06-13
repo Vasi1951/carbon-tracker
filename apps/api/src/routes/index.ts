@@ -15,6 +15,7 @@ import {
   GeminiInsightsAdapter,
 } from '@carbon-tracker/infrastructure';
 import { PrismaClient } from '@prisma/client';
+import { validateRequest } from '../middlewares/validateRequest.middleware';
 export function asyncHandler(
   fn: (req: Request, res: Response, next: NextFunction) => Promise<unknown>
 ): RequestHandler {
@@ -38,66 +39,28 @@ export function createRouter(
   const dashboardUseCase = new GetUserDashboardUseCase(activityRepo, factorRepo, goalRepo, cache);
   const goalUseCase = new SetCarbonGoalUseCase(activityRepo, factorRepo, goalRepo);
 
-  router.post('/activities', asyncHandler((req, res) => handlePostActivities(req, res, recordUseCase)));
+  const activitySchema = z.object({
+    category: z.nativeEnum(ActivityCategory),
+    amount: z.number().positive(),
+    unit: z.string().min(1),
+    date: z.string().datetime(),
+    description: z.string().min(1),
+  });
+
+  const goalSchema = z.object({
+    targetKgCO2e: z.number().positive(),
+    timeframe: z.enum(['week', 'month', 'year']),
+  });
+
+  router.post('/activities', validateRequest(activitySchema), asyncHandler((req, res) => handlePostActivities(req, res, recordUseCase)));
   router.get('/dashboard', asyncHandler((req, res) => handleGetDashboard(req, res, dashboardUseCase)));
-  router.post('/goals', asyncHandler((req, res) => handlePostGoals(req, res, goalUseCase)));
+  router.post('/goals', validateRequest(goalSchema), asyncHandler((req, res) => handlePostGoals(req, res, goalUseCase)));
   router.get('/insights', asyncHandler((req, res) => handleGetInsights(req, res, activityRepo, goalRepo, geminiAdapter)));
   router.get('/factors', asyncHandler((req, res) => handleGetFactors(req, res, prisma, cache)));
   router.delete('/account', asyncHandler((req, res) => handleDeleteAccount(req, res, prisma)));
 
   router.get('/seed', asyncHandler(async (req, res) => {
-    const factorsData = [
-      { category: 'TRANSPORT', region: 'US', year: 2020, co2ePerUnit: 0.25, source: 'EPA' },
-      { category: 'TRANSPORT', region: 'US', year: 2021, co2ePerUnit: 0.24, source: 'EPA' },
-      { category: 'TRANSPORT', region: 'US', year: 2022, co2ePerUnit: 0.23, source: 'EPA' },
-      { category: 'TRANSPORT', region: 'US', year: 2023, co2ePerUnit: 0.22, source: 'EPA' },
-      { category: 'TRANSPORT', region: 'US', year: 2024, co2ePerUnit: 0.21, source: 'EPA' },
-      { category: 'TRANSPORT', region: 'EU', year: 2020, co2ePerUnit: 0.18, source: 'EEA' },
-      { category: 'TRANSPORT', region: 'EU', year: 2021, co2ePerUnit: 0.17, source: 'EEA' },
-      { category: 'TRANSPORT', region: 'EU', year: 2022, co2ePerUnit: 0.16, source: 'EEA' },
-      { category: 'TRANSPORT', region: 'EU', year: 2023, co2ePerUnit: 0.15, source: 'EEA' },
-      { category: 'TRANSPORT', region: 'EU', year: 2024, co2ePerUnit: 0.14, source: 'EEA' },
-      { category: 'TRANSPORT', region: 'UK', year: 2020, co2ePerUnit: 0.2, source: 'DEFRA' },
-      { category: 'TRANSPORT', region: 'UK', year: 2021, co2ePerUnit: 0.19, source: 'DEFRA' },
-      { category: 'TRANSPORT', region: 'UK', year: 2022, co2ePerUnit: 0.18, source: 'DEFRA' },
-      { category: 'TRANSPORT', region: 'UK', year: 2023, co2ePerUnit: 0.17, source: 'DEFRA' },
-      { category: 'TRANSPORT', region: 'UK', year: 2024, co2ePerUnit: 0.16, source: 'DEFRA' },
-      { category: 'FOOD', region: 'US', year: 2020, co2ePerUnit: 6.5, source: 'USDA' },
-      { category: 'FOOD', region: 'US', year: 2021, co2ePerUnit: 6.4, source: 'USDA' },
-      { category: 'FOOD', region: 'US', year: 2022, co2ePerUnit: 6.3, source: 'USDA' },
-      { category: 'FOOD', region: 'US', year: 2023, co2ePerUnit: 6.2, source: 'USDA' },
-      { category: 'FOOD', region: 'US', year: 2024, co2ePerUnit: 6.0, source: 'USDA' },
-      { category: 'FOOD', region: 'EU', year: 2021, co2ePerUnit: 5.5, source: 'Eurostat' },
-      { category: 'FOOD', region: 'EU', year: 2022, co2ePerUnit: 5.4, source: 'Eurostat' },
-      { category: 'FOOD', region: 'EU', year: 2023, co2ePerUnit: 5.3, source: 'Eurostat' },
-      { category: 'FOOD', region: 'EU', year: 2024, co2ePerUnit: 5.2, source: 'Eurostat' },
-      { category: 'FOOD', region: 'GLOBAL', year: 2022, co2ePerUnit: 5.8, source: 'FAO' },
-      { category: 'FOOD', region: 'GLOBAL', year: 2023, co2ePerUnit: 5.7, source: 'FAO' },
-      { category: 'FOOD', region: 'GLOBAL', year: 2024, co2ePerUnit: 5.6, source: 'FAO' },
-      { category: 'ENERGY', region: 'US', year: 2020, co2ePerUnit: 0.45, source: 'EIA' },
-      { category: 'ENERGY', region: 'US', year: 2021, co2ePerUnit: 0.43, source: 'EIA' },
-      { category: 'ENERGY', region: 'US', year: 2022, co2ePerUnit: 0.41, source: 'EIA' },
-      { category: 'ENERGY', region: 'US', year: 2023, co2ePerUnit: 0.39, source: 'EIA' },
-      { category: 'ENERGY', region: 'US', year: 2024, co2ePerUnit: 0.37, source: 'EIA' },
-      { category: 'ENERGY', region: 'EU', year: 2021, co2ePerUnit: 0.28, source: 'EEA' },
-      { category: 'ENERGY', region: 'EU', year: 2022, co2ePerUnit: 0.26, source: 'EEA' },
-      { category: 'ENERGY', region: 'EU', year: 2023, co2ePerUnit: 0.24, source: 'EEA' },
-      { category: 'ENERGY', region: 'EU', year: 2024, co2ePerUnit: 0.22, source: 'EEA' },
-      { category: 'ENERGY', region: 'GLOBAL', year: 2022, co2ePerUnit: 0.48, source: 'IEA' },
-      { category: 'ENERGY', region: 'GLOBAL', year: 2023, co2ePerUnit: 0.46, source: 'IEA' },
-      { category: 'ENERGY', region: 'GLOBAL', year: 2024, co2ePerUnit: 0.44, source: 'IEA' },
-      { category: 'CONSUMPTION', region: 'US', year: 2020, co2ePerUnit: 1.8, source: 'EPA' },
-      { category: 'CONSUMPTION', region: 'US', year: 2021, co2ePerUnit: 1.75, source: 'EPA' },
-      { category: 'CONSUMPTION', region: 'US', year: 2022, co2ePerUnit: 1.7, source: 'EPA' },
-      { category: 'CONSUMPTION', region: 'US', year: 2023, co2ePerUnit: 1.65, source: 'EPA' },
-      { category: 'CONSUMPTION', region: 'US', year: 2024, co2ePerUnit: 1.6, source: 'EPA' },
-      { category: 'CONSUMPTION', region: 'EU', year: 2021, co2ePerUnit: 1.4, source: 'EEA' },
-      { category: 'CONSUMPTION', region: 'EU', year: 2022, co2ePerUnit: 1.35, source: 'EEA' },
-      { category: 'CONSUMPTION', region: 'EU', year: 2023, co2ePerUnit: 1.3, source: 'EEA' },
-      { category: 'CONSUMPTION', region: 'EU', year: 2024, co2ePerUnit: 1.25, source: 'EEA' },
-      { category: 'CONSUMPTION', region: 'GLOBAL', year: 2023, co2ePerUnit: 1.5, source: 'IPCC' },
-      { category: 'CONSUMPTION', region: 'GLOBAL', year: 2024, co2ePerUnit: 1.45, source: 'IPCC' },
-    ] as any;
+    const { factorsData } = await import('./seedData.js');
     for (const factor of factorsData) {
       await prisma.emissionFactor.upsert({
         where: {
@@ -125,14 +88,7 @@ async function handlePostActivities(
   res: Response,
   recordUseCase: RecordActivityUseCase
 ): Promise<unknown> {
-  const schema = z.object({
-    category: z.nativeEnum(ActivityCategory),
-    amount: z.number().positive(),
-    unit: z.string().min(1),
-    date: z.string().datetime(),
-    description: z.string().min(1),
-  });
-  const parsed = schema.parse(req.body);
+  const parsed = req.body as { category: ActivityCategory; amount: number; unit: string; date: string; description: string };
   const userId = 'default-user';
   const result = await recordUseCase.execute({ userId, ...parsed });
   if (!result.success) return res.status(400).json({ error: result.error.message });
@@ -162,11 +118,7 @@ async function handlePostGoals(
   res: Response,
   goalUseCase: SetCarbonGoalUseCase
 ): Promise<unknown> {
-  const schema = z.object({
-    targetKgCO2e: z.number().positive(),
-    timeframe: z.enum(['week', 'month', 'year']),
-  });
-  const parsed = schema.parse(req.body);
+  const parsed = req.body as { targetKgCO2e: number; timeframe: 'week' | 'month' | 'year' };
   const userId = 'default-user';
   const result = await goalUseCase.execute({ userId, ...parsed });
   if (!result.success) return res.status(400).json({ error: result.error.message });
