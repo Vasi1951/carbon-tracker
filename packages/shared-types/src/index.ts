@@ -17,7 +17,7 @@ export const ActivityZodSchema = z.object({
     .datetime('Invalid ISO Date')
     .refine(
       (val) => {
-        return new Date(val).getTime() <= Date.now();
+        return new Date(val).getTime() <= Date.now() + 24 * 60 * 60 * 1000;
       },
       {
         message: 'Date cannot be in the future',

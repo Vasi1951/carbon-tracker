@@ -36,7 +36,7 @@ export default class Activity {
     if (isNaN(dateMs)) {
       throw new Error('Invalid ISO Date');
     }
-    if (dateMs > Date.now()) {
+    if (dateMs > Date.now() + 24 * 60 * 60 * 1000) {
       throw new Error('Date cannot be in the future');
     }
     const uuidRegex =
