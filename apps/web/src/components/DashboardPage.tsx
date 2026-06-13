@@ -1,5 +1,5 @@
 import React from 'react';
-import { DashboardData, GoalData, InsightTip, ActivityRecord } from '../types';
+import type { DashboardData, GoalData, InsightTip, ActivityRecord } from '../types';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { Leaf, Zap, Trash2, TrendingUp, AlertTriangle, Target, CheckCircle2, Activity, PieChart as PieChartIcon } from 'lucide-react';
 
@@ -39,7 +39,7 @@ const DashboardPage = React.memo(function DashboardPage({
           CarbonTwin
         </div>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <button ref={triggerRef as React.RefObject<HTMLButtonElement>} className="btn-action" onClick={() => setIsModalOpen(true)} aria-haspopup="dialog">
+          <button ref={triggerRef as React.RefObject<HTMLButtonElement>} className="btn-action" onClick={() => { setIsModalOpen(true); }} aria-haspopup="dialog">
             <Zap size={18} /> Add Activity
           </button>
           <button className="btn-danger" onClick={handleDeleteAccount} aria-label="Delete user account">
@@ -79,7 +79,7 @@ const DashboardPage = React.memo(function DashboardPage({
                     <TrendingUp size={16} /> Estimated Saving: {String(insight.estimatedSavingKg)} kgCO₂e
                   </span>
                 </div>
-                <button className="btn-outline" onClick={() => setInsightDismissed(true)} aria-label="Dismiss AI tip" style={{ border: 'none', padding: '4px 8px' }}>
+                <button className="btn-outline" onClick={() => { setInsightDismissed(true); }} aria-label="Dismiss AI tip" style={{ border: 'none', padding: '4px 8px' }}>
                   &times;
                 </button>
               </div>

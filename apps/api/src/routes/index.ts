@@ -16,6 +16,13 @@ import {
 } from '@carbon-tracker/infrastructure';
 import { PrismaClient } from '@prisma/client';
 import { validateRequest } from '../middlewares/validateRequest.middleware';
+import { authMiddleware } from '../middlewares/auth.middleware';
+import { createRateLimiter } from '../middlewares/rateLimiter.middleware';
+/**
+ * Wraps an async express route handler to automatically catch errors and pass them to the global error handler.
+ * @param fn The async route handler function
+ * @returns A standard Express RequestHandler
+ */
 export function asyncHandler(
   fn: (req: Request, res: Response, next: NextFunction) => Promise<unknown>
 ): RequestHandler {
@@ -24,6 +31,14 @@ export function asyncHandler(
   };
 }
 
+/**
+ * Creates the main Express router for the API, injecting all required dependencies into the handlers.
+ * @param prisma The Prisma database client
+ * @param cache The Redis cache service
+ * @param eventBus The Cloud Pub/Sub event bus
+ * @param geminiAdapter The Gemini AI integration adapter
+ * @returns An Express Router instance
+ */
 export function createRouter(
   prisma: PrismaClient,
   cache: RedisCacheService,
@@ -52,6 +67,9 @@ export function createRouter(
     timeframe: z.enum(['week', 'month', 'year']),
   });
 
+  router.use(createRateLimiter(cache));
+  router.use(authMiddleware);
+
   router.post('/activities', validateRequest(activitySchema), asyncHandler((req, res) => handlePostActivities(req, res, recordUseCase)));
   router.get('/dashboard', asyncHandler((req, res) => handleGetDashboard(req, res, dashboardUseCase)));
   router.post('/goals', validateRequest(goalSchema), asyncHandler((req, res) => handlePostGoals(req, res, goalUseCase)));
@@ -59,26 +77,7 @@ export function createRouter(
   router.get('/factors', asyncHandler((req, res) => handleGetFactors(req, res, prisma, cache)));
   router.delete('/account', asyncHandler((req, res) => handleDeleteAccount(req, res, prisma)));
 
-  router.get('/seed', asyncHandler(async (req, res) => {
-    const { factorsData } = await import('./seedData.js');
-    for (const factor of factorsData) {
-      await prisma.emissionFactor.upsert({
-        where: {
-          category_region_year: {
-            category: factor.category,
-            region: factor.region,
-            year: factor.year,
-          },
-        },
-        update: {
-          co2ePerUnit: factor.co2ePerUnit,
-          source: factor.source,
-        },
-        create: factor,
-      });
-    }
-    res.json({ success: true, count: factorsData.length });
-  }));
+  router.get('/seed', asyncHandler((req, res) => handleSeedData(req, res, prisma)));
 
   return router;
 }
@@ -166,4 +165,25 @@ async function handleDeleteAccount(
   await prisma.activity.deleteMany({ where: { userId } });
   await prisma.userGoal.deleteMany({ where: { userId } });
   return res.json({ success: true, message: 'Account and associated data deleted successfully' });
+}
+
+async function handleSeedData(req: Request, res: Response, prisma: PrismaClient): Promise<unknown> {
+  const { factorsData } = await import('./seedData.js');
+  for (const factor of factorsData) {
+    await prisma.emissionFactor.upsert({
+      where: {
+        category_region_year: {
+          category: factor.category,
+          region: factor.region,
+          year: factor.year,
+        },
+      },
+      update: {
+        co2ePerUnit: factor.co2ePerUnit,
+        source: factor.source,
+      },
+      create: factor,
+    });
+  }
+  return res.json({ success: true, count: factorsData.length });
 }

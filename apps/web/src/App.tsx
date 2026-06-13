@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, Suspense } from 'react';
-import { ActivityRecord, DashboardData, GoalData, InsightTip } from './types';
+import type { ActivityRecord, DashboardData, GoalData, InsightTip } from './types';
 
 // Lazy loaded components for code splitting
 const DashboardPage = React.lazy(() => import('./components/DashboardPage'));

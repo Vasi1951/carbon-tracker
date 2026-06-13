@@ -6,20 +6,18 @@ export class PrismaUserGoalRepository implements IUserGoalRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
   public async saveGoal(goal: Goal): Promise<void> {
+    const data = {
+      userId: goal.userId,
+      targetKgCO2e: goal.targetKgCO2e,
+      timeframe: goal.timeframe,
+      createdAt: goal.createdAt,
+    };
     await this.prisma.userGoal.upsert({
       where: { id: goal.id },
-      update: {
-        userId: goal.userId,
-        targetKgCO2e: goal.targetKgCO2e,
-        timeframe: goal.timeframe,
-        createdAt: goal.createdAt,
-      },
+      update: data,
       create: {
         id: goal.id,
-        userId: goal.userId,
-        targetKgCO2e: goal.targetKgCO2e,
-        timeframe: goal.timeframe,
-        createdAt: goal.createdAt,
+        ...data,
       },
     });
   }

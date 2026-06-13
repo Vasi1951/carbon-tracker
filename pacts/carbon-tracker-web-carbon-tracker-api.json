@@ -1,0 +1,107 @@
+{
+  "consumer": {
+    "name": "carbon-tracker-web"
+  },
+  "interactions": [
+    {
+      "description": "a request to record a carbon activity",
+      "providerStates": [
+        {
+          "name": "User is authenticated"
+        }
+      ],
+      "request": {
+        "body": {
+          "amount": 15,
+          "category": "TRANSPORT",
+          "date": "2026-06-10T12:00:00.000Z",
+          "description": "Commute to work",
+          "unit": "km"
+        },
+        "headers": {
+          "Authorization": "Bearer test-token",
+          "Content-Type": "application/json"
+        },
+        "matchingRules": {
+          "body": {},
+          "header": {
+            "Authorization": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          }
+        },
+        "method": "POST",
+        "path": "/api/v1/activities"
+      },
+      "response": {
+        "body": {
+          "activityId": "e2490de5-5bd3-43d5-b7c4-526e33f71304",
+          "kgCO2e": 3.75,
+          "message": "Activity recorded successfully"
+        },
+        "generators": {
+          "body": {
+            "$.activityId": {
+              "type": "Uuid"
+            }
+          }
+        },
+        "headers": {
+          "Content-Type": "application/json; charset=utf-8"
+        },
+        "matchingRules": {
+          "body": {
+            "$.activityId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.kgCO2e": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "decimal"
+                }
+              ]
+            },
+            "$.message": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {},
+          "status": {}
+        },
+        "status": 201
+      }
+    }
+  ],
+  "metadata": {
+    "pact-js": {
+      "version": "12.5.2"
+    },
+    "pactRust": {
+      "ffi": "0.4.20",
+      "models": "1.2.0"
+    },
+    "pactSpecification": {
+      "version": "3.0.0"
+    }
+  },
+  "provider": {
+    "name": "carbon-tracker-api"
+  }
+}

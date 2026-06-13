@@ -35,6 +35,9 @@ export class SetCarbonGoalUseCase {
    */
   public async execute(input: SetCarbonGoalInput): Promise<Result<SetCarbonGoalOutput>> {
     try {
+      if (input.targetKgCO2e <= 0) {
+        return fail(new Error('Target must be positive'));
+      }
       const average = await this.getCurrentAverage(input.userId);
       if (average > 0 && input.targetKgCO2e < 0.1 * average) {
         return fail(new Error('Goal target is too aggressive'));

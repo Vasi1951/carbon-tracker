@@ -46,6 +46,17 @@ graph TD
     Domain --> Types
 ```
 
+## Architecture Decision Records (ADR)
+- [ADR-001: Clean Architecture Pattern](docs/adr/adr-001.md)
+- [ADR-002: TypeScript Strict Mode](docs/adr/adr-002.md)
+- [ADR-003: Postgres over NoSQL](docs/adr/adr-003.md)
+- [ADR-004: Monorepo Architecture](docs/adr/adr-004-monorepo.md)
+- [ADR-005: Testing Strategy](docs/adr/adr-005-testing.md)
+- [ADR-006: API Security Posture](docs/adr/adr-006-security.md)
+- [ADR-007: Tailwind CSS + Radix UI](docs/adr/adr-007.md)
+- [ADR-008: React Native with Expo](docs/adr/adr-008.md)
+- [ADR-009: Gemini Integration](docs/adr/adr-009.md)
+
 ## Getting Started
 
 ### Prerequisites

@@ -68,7 +68,8 @@ module.exports = {
         'max-lines-per-function': 'off',
         'complexity': 'off',
         '@typescript-eslint/no-unused-vars': 'off',
-        '@typescript-eslint/no-explicit-any': 'off'
+        '@typescript-eslint/no-explicit-any': 'off',
+        '@typescript-eslint/unbound-method': 'off'
       }
     },
     // Ignore function line length and complexity in React components

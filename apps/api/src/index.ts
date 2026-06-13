@@ -10,7 +10,6 @@ import {
 } from '@carbon-tracker/infrastructure';
 import { createRouter } from './routes';
 import { responseTimerMiddleware } from './middlewares/responseTimer.middleware';
-import { createRateLimiter } from './middlewares/rateLimiter.middleware';
 
 const app = express();
 
@@ -45,16 +44,6 @@ const cache = new RedisCacheService(process.env.REDIS_URL || 'redis://localhost:
 const eventBus = new CloudPubSubEventBus();
 const geminiAdapter = new GeminiInsightsAdapter(process.env.GEMINI_API_KEY || 'mock-key');
 
-import rateLimit from 'express-rate-limit';
-
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
-  message: 'Too many requests from this IP, please try again later.',
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-app.use(limiter);
 app.use(
   '/api/v1',
   createRouter(prisma, cache, eventBus, geminiAdapter)

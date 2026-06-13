@@ -9,24 +9,20 @@ export class PrismaActivityRepository implements IActivityRepository {
   public async save(activity: Activity): Promise<void> {
     const activityRecord = activity as unknown as Record<string, unknown>;
     const userId = (activityRecord.userId as string) || 'default-user';
+    const data = {
+      userId,
+      category: activity.category,
+      amount: activity.amount,
+      unit: activity.unit,
+      date: new Date(activity.date),
+      description: activity.description,
+    };
     await this.prisma.activity.upsert({
       where: { id: activity.id },
-      update: {
-        userId,
-        category: activity.category,
-        amount: activity.amount,
-        unit: activity.unit,
-        date: new Date(activity.date),
-        description: activity.description,
-      },
+      update: data,
       create: {
         id: activity.id,
-        userId,
-        category: activity.category,
-        amount: activity.amount,
-        unit: activity.unit,
-        date: new Date(activity.date),
-        description: activity.description,
+        ...data,
       },
     });
   }

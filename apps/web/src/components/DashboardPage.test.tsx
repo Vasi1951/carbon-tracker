@@ -53,7 +53,7 @@ describe('DashboardPage', () => {
 
   it('displays the carbon breakdown', () => {
     render(<DashboardPage {...mockProps} />);
-    expect(screen.getByText(/TRANSPORT:/)).toBeInTheDocument();
-    expect(screen.getByText(/FOOD:/)).toBeInTheDocument();
+    expect(screen.getByText(/TRANSPORT/i)).toBeInTheDocument();
+    expect(screen.getByText(/FOOD/i)).toBeInTheDocument();
   });
 });

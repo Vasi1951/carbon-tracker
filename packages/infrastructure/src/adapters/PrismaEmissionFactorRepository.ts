@@ -26,6 +26,10 @@ export class PrismaEmissionFactorRepository implements IEmissionFactorRepository
 
   public async cacheFactors(factors: EmissionFactor[]): Promise<void> {
     for (const f of factors) {
+      const data = {
+        co2ePerUnit: f.co2ePerUnit,
+        source: f.source,
+      };
       await this.prisma.emissionFactor.upsert({
         where: {
           category_region_year: {
@@ -34,16 +38,12 @@ export class PrismaEmissionFactorRepository implements IEmissionFactorRepository
             year: f.year,
           },
         },
-        update: {
-          co2ePerUnit: f.co2ePerUnit,
-          source: f.source,
-        },
+        update: data,
         create: {
           category: f.category,
           region: f.region,
           year: f.year,
-          co2ePerUnit: f.co2ePerUnit,
-          source: f.source,
+          ...data,
         },
       });
     }

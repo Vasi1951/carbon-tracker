@@ -5,115 +5,64 @@ import EmissionFactor from './EmissionFactor';
 import CarbonFootprint from './CarbonFootprint';
 import CalculationService from './CalculationService';
 import ValidationService from './ValidationService';
-
-const VALID_UUID = '123e4567-e89b-12d3-a456-426614174000';
+import { VALID_UUID, createTestActivity, createTestFactor } from './test-utils';
 
 describe('Activity Entity', () => {
   it('should create a valid Activity instance', () => {
-    const activity = new Activity(
-      VALID_UUID,
-      ActivityCategory.TRANSPORT,
-      10,
-      'km',
-      new Date().toISOString(),
-      'Commute to office'
-    );
+    const activity = createTestActivity();
     expect(activity).toBeDefined();
     expect(activity.isValidDateRange('2020-01-01', '2030-01-01')).toBe(true);
   });
 
   it('should throw error for non-positive amount', () => {
-    expect(
-      () =>
-        new Activity(VALID_UUID, ActivityCategory.TRANSPORT, 0, 'km', new Date().toISOString(), 'x')
-    ).toThrow('Amount must be positive');
-    expect(
-      () =>
-        new Activity(
-          VALID_UUID,
-          ActivityCategory.TRANSPORT,
-          -1,
-          'km',
-          new Date().toISOString(),
-          'x'
-        )
-    ).toThrow('Amount must be positive');
+    expect(() => createTestActivity({ amount: 0 })).toThrow('Amount must be positive');
+    expect(() => createTestActivity({ amount: -1 })).toThrow('Amount must be positive');
   });
 
   it('should throw error for future date', () => {
-    const futureDate = new Date(Date.now() + 1000 * 60 * 60).toISOString();
-    expect(
-      () => new Activity(VALID_UUID, ActivityCategory.TRANSPORT, 10, 'km', futureDate, 'x')
-    ).toThrow('Date cannot be in the future');
+    const futureDate = new Date(Date.now() + 1000 * 60 * 60 * 48).toISOString();
+    expect(() => createTestActivity({ date: futureDate })).toThrow('Date cannot be in the future');
   });
 
   it('should throw error for invalid date format', () => {
-    expect(
-      () => new Activity(VALID_UUID, ActivityCategory.TRANSPORT, 10, 'km', 'invalid-date', 'x')
-    ).toThrow('Invalid ISO Date');
+    expect(() => createTestActivity({ date: 'invalid-date' })).toThrow('Invalid ISO Date');
   });
 
   it('should throw error for invalid UUID', () => {
-    expect(
-      () =>
-        new Activity(
-          'invalid-uuid',
-          ActivityCategory.TRANSPORT,
-          10,
-          'km',
-          new Date().toISOString(),
-          'x'
-        )
-    ).toThrow('Invalid UUID');
+    expect(() => createTestActivity({ id: 'invalid-uuid' })).toThrow('Invalid UUID');
   });
 
   it('should throw error for empty unit or description', () => {
-    expect(
-      () =>
-        new Activity(VALID_UUID, ActivityCategory.TRANSPORT, 10, '', new Date().toISOString(), 'x')
-    ).toThrow('Unit is required');
-    expect(
-      () =>
-        new Activity(VALID_UUID, ActivityCategory.TRANSPORT, 10, 'km', new Date().toISOString(), '')
-    ).toThrow('Description is required');
+    expect(() => createTestActivity({ unit: '' })).toThrow('Unit is required');
+    expect(() => createTestActivity({ description: '' })).toThrow('Description is required');
   });
 });
 
 describe('EmissionFactor Value Object', () => {
   it('should create a valid EmissionFactor instance', () => {
-    const factor = new EmissionFactor(0.12, 'EPA', 'US', 2024, ActivityCategory.TRANSPORT);
+    const factor = createTestFactor();
     expect(factor).toBeDefined();
     expect(factor.toString()).toContain('TRANSPORT:0.12kgCO2e/unit');
   });
 
   it('should throw for invalid CO2e unit', () => {
-    expect(() => new EmissionFactor(-0.01, 'EPA', 'US', 2024, ActivityCategory.TRANSPORT)).toThrow(
-      'CO2e per unit must be non-negative'
-    );
+    expect(() => createTestFactor({ co2ePerUnit: -0.01 })).toThrow('CO2e per unit must be non-negative');
   });
 
   it('should throw for invalid year', () => {
-    expect(() => new EmissionFactor(0.1, 'EPA', 'US', 1999, ActivityCategory.TRANSPORT)).toThrow(
-      'Year must be between 2000 and 2030'
-    );
-    expect(() => new EmissionFactor(0.1, 'EPA', 'US', 2031, ActivityCategory.TRANSPORT)).toThrow(
-      'Year must be between 2000 and 2030'
-    );
+    expect(() => createTestFactor({ year: 1999 })).toThrow('Year must be between 2000 and 2030');
+    expect(() => createTestFactor({ year: 2031 })).toThrow('Year must be between 2000 and 2030');
   });
 
   it('should throw for empty source or region', () => {
-    expect(() => new EmissionFactor(0.1, '', 'US', 2024, ActivityCategory.TRANSPORT)).toThrow(
-      'Source is required'
-    );
-    expect(() => new EmissionFactor(0.1, 'EPA', ' ', 2024, ActivityCategory.TRANSPORT)).toThrow(
-      'Region is required'
-    );
+    expect(() => createTestFactor({ source: '' })).toThrow('Source is required');
+    expect(() => createTestFactor({ region: ' ' })).toThrow('Region is required');
   });
 
   it('should compare equality correctly', () => {
-    const factor1 = new EmissionFactor(0.12, 'EPA', 'US', 2024, ActivityCategory.TRANSPORT);
-    const factor2 = new EmissionFactor(0.12, 'EPA', 'US', 2024, ActivityCategory.TRANSPORT);
-    const factor3 = new EmissionFactor(0.15, 'EPA', 'US', 2024, ActivityCategory.TRANSPORT);
+    const factor1 = createTestFactor();
+    const factor2 = createTestFactor();
+    const factor3 = createTestFactor({ co2ePerUnit: 0.15 });
     expect(factor1.equals(factor2)).toBe(true);
     expect(factor1.equals(factor3)).toBe(false);
   });
@@ -123,67 +72,29 @@ describe('CalculationService', () => {
   const service = new CalculationService();
 
   it('should calculate transport footprint correctly with 2 decimal precision', () => {
-    const activity = new Activity(
-      VALID_UUID,
-      ActivityCategory.TRANSPORT,
-      12.345,
-      'km',
-      new Date().toISOString(),
-      'x'
-    );
-    const factor = new EmissionFactor(0.123, 'EPA', 'US', 2024, ActivityCategory.TRANSPORT);
+    const activity = createTestActivity({ amount: 12.345 });
+    const factor = createTestFactor({ co2ePerUnit: 0.123 });
     const result = service.calculate(activity, factor);
     expect(result).toBe(1.52);
   });
 
   it('should throw if category mismatch', () => {
-    const activity = new Activity(
-      VALID_UUID,
-      ActivityCategory.TRANSPORT,
-      10,
-      'km',
-      new Date().toISOString(),
-      'x'
-    );
-    const factor = new EmissionFactor(0.1, 'EPA', 'US', 2024, ActivityCategory.FOOD);
-    expect(() => service.calculate(activity, factor)).toThrow(
-      'Activity category and factor category must match'
-    );
+    const activity = createTestActivity();
+    const factor = createTestFactor({ category: ActivityCategory.FOOD });
+    expect(() => service.calculate(activity, factor)).toThrow('Activity category and factor category must match');
   });
 
   it('should handle massive numbers correctly', () => {
-    const activity = new Activity(
-      VALID_UUID,
-      ActivityCategory.TRANSPORT,
-      1e9,
-      'km',
-      new Date().toISOString(),
-      'x'
-    );
-    const factor = new EmissionFactor(1.5, 'EPA', 'US', 2024, ActivityCategory.TRANSPORT);
+    const activity = createTestActivity({ amount: 1e9 });
+    const factor = createTestFactor({ co2ePerUnit: 1.5 });
     expect(service.calculate(activity, factor)).toBe(1.5e9);
   });
 
   it('should perform batch calculate', () => {
-    const act1 = new Activity(
-      VALID_UUID,
-      ActivityCategory.TRANSPORT,
-      10,
-      'km',
-      new Date().toISOString(),
-      'x'
-    );
-    const act2 = new Activity(
-      '223e4567-e89b-12d3-a456-426614174001',
-      ActivityCategory.FOOD,
-      5,
-      'kg',
-      new Date().toISOString(),
-      'y'
-    );
-
-    const factor1 = new EmissionFactor(0.12, 'EPA', 'US', 2024, ActivityCategory.TRANSPORT);
-    const factor2 = new EmissionFactor(2.5, 'EPA', 'US', 2024, ActivityCategory.FOOD);
+    const act1 = createTestActivity();
+    const act2 = createTestActivity({ id: '223e4567-e89b-12d3-a456-426614174001', category: ActivityCategory.FOOD, amount: 5 });
+    const factor1 = createTestFactor();
+    const factor2 = createTestFactor({ category: ActivityCategory.FOOD, co2ePerUnit: 2.5 });
 
     const map = new Map<string, EmissionFactor>();
     map.set(ActivityCategory.TRANSPORT, factor1);
@@ -194,33 +105,22 @@ describe('CalculationService', () => {
   });
 
   it('should throw in batch calculate if factor missing', () => {
-    const act1 = new Activity(
-      VALID_UUID,
-      ActivityCategory.TRANSPORT,
-      10,
-      'km',
-      new Date().toISOString(),
-      'x'
-    );
+    const act1 = createTestActivity();
     const map = new Map<string, EmissionFactor>();
-    expect(() => service.batchCalculate([act1], map)).toThrow(
-      'Missing factor for category: TRANSPORT'
-    );
+    expect(() => service.batchCalculate([act1], map)).toThrow('Missing factor for category: TRANSPORT');
   });
 });
 
 describe('CarbonFootprint Aggregate Root', () => {
-  it('should add and remove activities and maintain totals', () => {
+  const setupFootprint = (factorOptions?: any) => {
     const footprint = new CarbonFootprint();
-    const act = new Activity(
-      VALID_UUID,
-      ActivityCategory.TRANSPORT,
-      10,
-      'km',
-      new Date().toISOString(),
-      'x'
-    );
-    const factor = new EmissionFactor(0.12, 'EPA', 'US', 2024, ActivityCategory.TRANSPORT);
+    const act = createTestActivity();
+    const factor = createTestFactor(factorOptions);
+    return { footprint, act, factor };
+  };
+
+  it('should add and remove activities and maintain totals', () => {
+    const { footprint, act, factor } = setupFootprint();
 
     footprint.addActivity(act, factor);
     expect(footprint.totalKgCO2e).toBe(1.2);
@@ -238,31 +138,14 @@ describe('CarbonFootprint Aggregate Root', () => {
   });
 
   it('should throw if activity and factor category mismatch', () => {
-    const footprint = new CarbonFootprint();
-    const act = new Activity(
-      VALID_UUID,
-      ActivityCategory.TRANSPORT,
-      10,
-      'km',
-      new Date().toISOString(),
-      'x'
-    );
-    const factor = new EmissionFactor(0.12, 'EPA', 'US', 2024, ActivityCategory.FOOD);
+    const { footprint, act, factor } = setupFootprint({ category: ActivityCategory.FOOD });
     expect(() => {
       footprint.addActivity(act, factor);
     }).toThrow('Activity category and factor category must match');
   });
 
   it('should throw if recalculating with a missing factor', () => {
-    const footprint = new CarbonFootprint();
-    const act = new Activity(
-      VALID_UUID,
-      ActivityCategory.TRANSPORT,
-      10,
-      'km',
-      new Date().toISOString(),
-      'x'
-    );
+    const { footprint, act } = setupFootprint();
     footprint.activities.push(act);
     expect(() => {
       footprint.recalculate();
@@ -307,21 +190,8 @@ describe('Property-Based Test (Random valid generators)', () => {
     for (let i = 0; i < 50; i++) {
       const amount = Math.random() * 1000 + 0.1;
       const co2ePerUnit = Math.random() * 5;
-      const activity = new Activity(
-        VALID_UUID,
-        ActivityCategory.TRANSPORT,
-        amount,
-        'km',
-        new Date().toISOString(),
-        'test'
-      );
-      const factor = new EmissionFactor(
-        co2ePerUnit,
-        'test-src',
-        'US',
-        2024,
-        ActivityCategory.TRANSPORT
-      );
+      const activity = createTestActivity({ amount });
+      const factor = createTestFactor({ co2ePerUnit });
       const calculated = service.calculate(activity, factor);
       expect(calculated).toBeGreaterThanOrEqual(0);
     }

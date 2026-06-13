@@ -27,7 +27,9 @@ beforeAll(async () => {
   const pgUrl = pgContainer.getConnectionUri();
   process.env.DATABASE_URL = pgUrl;
 
-  execSync('npx prisma db push --schema ../../packages/infrastructure/prisma/schema.prisma', {
+  const path = require('path');
+  const schemaPath = path.resolve(__dirname, '../../../packages/infrastructure/prisma/schema.prisma');
+  execSync(`npx prisma db push --schema ${schemaPath}`, {
     env: { ...process.env, DATABASE_URL: pgUrl },
   });
 

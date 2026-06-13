@@ -1,48 +1,14 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { PostgreSqlContainer, type StartedPostgreSqlContainer } from '@testcontainers/postgresql';
-import { RedisContainer, type StartedRedisContainer } from '@testcontainers/redis';
-import { execSync } from 'child_process';
-import { PrismaClient } from '@prisma/client';
+import { describe, it, expect } from 'vitest';
+import { useTestContainers } from './test-setup';
 import { PrismaActivityRepository } from './PrismaActivityRepository';
-import { RedisCacheService } from './RedisCacheService';
 import { Activity } from '@carbon-tracker/domain';
 import { ActivityCategory } from '@carbon-tracker/shared-types';
 
 describe('Infrastructure Integration Tests with Testcontainers', () => {
-  let pgContainer: StartedPostgreSqlContainer | undefined;
-  let redisContainer: StartedRedisContainer | undefined;
-  let prisma: PrismaClient | undefined;
-  let cache: RedisCacheService | undefined;
-
-  beforeAll(async () => {
-    pgContainer = await new PostgreSqlContainer('postgres:16-alpine')
-      .withDatabase('carbon_tracker')
-      .withUsername('postgres')
-      .withPassword('password')
-      .start();
-
-    const pgUrl = pgContainer.getConnectionUri();
-    process.env.DATABASE_URL = pgUrl;
-
-    execSync('npx prisma db push --schema prisma/schema.prisma', {
-      env: { ...process.env, DATABASE_URL: pgUrl },
-    });
-
-    prisma = new PrismaClient({ datasources: { db: { url: pgUrl } } });
-
-    redisContainer = await new RedisContainer('redis:7-alpine').start();
-    const redisUrl = `redis://${redisContainer.getHost()}:${String(redisContainer.getMappedPort(6379))}`;
-    cache = new RedisCacheService(redisUrl);
-  }, 180000);
-
-  afterAll(async () => {
-    if (prisma) await prisma.$disconnect();
-    if (cache) await cache.disconnect();
-    if (pgContainer) await pgContainer.stop();
-    if (redisContainer) await redisContainer.stop();
-  });
+  const context = useTestContainers();
 
   it('should save and retrieve activities from PrismaActivityRepository', async () => {
+    const { prisma } = context;
     if (!prisma) throw new Error('Prisma not initialized');
     const repo = new PrismaActivityRepository(prisma);
     const act = new Activity(
@@ -72,6 +38,7 @@ describe('Infrastructure Integration Tests with Testcontainers', () => {
   });
 
   it('should set and get values from RedisCacheService', async () => {
+    const { cache } = context;
     if (!cache) throw new Error('Cache not initialized');
     await cache.set('test-key', 'test-value', 10);
     const val = await cache.get('test-key');
